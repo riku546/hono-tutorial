@@ -3,8 +3,9 @@ import { Hono } from "hono";
 
 const app = new Hono();
 
-app.get("/", (c) => {
-  return c.json({ message: "Hello Hono!" });
+// メモ一覧取得
+app.get("/api/memo", async (c) => {
+  return c.json({ message: "Hello, hono!" });
 });
 
 serve(
