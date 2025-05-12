@@ -70,7 +70,7 @@ export class UserRepository {
     return user;
   };
 
-  getUserById = async (id: string) => {
+  userInfo = async (id: string) => {
     const user = await prisma.user.findUnique({
       where: { id },
       select: {
@@ -82,7 +82,7 @@ export class UserRepository {
     return user;
   };
 
-  getUserIdByCredentials = async (
+  checkValid = async (
     email: string,
     password: string
   ): Promise<boolean | undefined> => {
