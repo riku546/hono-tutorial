@@ -1,9 +1,10 @@
+import { callbackify } from "util";
 import { PrismaClient } from "./generated/prisma/index.js";
 
 const prisma = new PrismaClient();
 
 export class MemoRepository {
-  getMemosByUser = async (userId: string) => {
+  fetchMemos = async (userId: string) => {
     return prisma.memo.findMany({
       where: { userId },
       select: {
@@ -54,5 +55,45 @@ export class MemoRepository {
         },
       },
     });
+  };
+}
+
+export class UserRepository {
+  createUser = async (name: string, email: string, password: string) => {
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: password,
+      },
+    });
+    return user;
+  };
+
+  getUserById = async (id: string) => {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
+    return user;
+  };
+
+  getUserIdByCredentials = async (
+    email: string,
+    password: string
+  ): Promise<boolean | undefined> => {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, password: true },
+    });
+    if (!user) {
+      return undefined;
+    }
+
+    return password === user.password;
   };
 }

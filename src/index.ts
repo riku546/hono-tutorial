@@ -1,11 +1,19 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { MemoRepository } from "./repository.js";
 
 const app = new Hono();
 
-// メモ一覧取得
+const memoRepository = new MemoRepository();
+
 app.get("/api/memo", async (c) => {
-  return c.json({ message: "Hello, hono!" });
+  const userId: string = "";
+  try {
+    const memos = await memoRepository.fetchMemos(userId);
+    return c.json({ memos }, 200);
+  } catch (error) {
+    return c.json({ error: "Internal Server Error" }, 500);
+  }
 });
 
 serve(
