@@ -65,10 +65,56 @@ app.post("/login", async (c) => {
 });
 
 app.get("/api/memo", async (c) => {
-  const userId: string = "";
+  const userId: string = c.get("jwtPayload").userId;
+
   try {
     const memos = await memoRepository.fetchMemos(userId);
+
     return c.json({ memos }, 200);
+  } catch (error) {
+    return c.json({ error: "Internal Server Error" }, 500);
+  }
+});
+
+app.post("/api/memo", async (c) => {
+  const userId: string = c.get("jwtPayload").userId;
+  const { title, content } = await c.req.json();
+
+  try {
+    const memo = await memoRepository.createMemo(userId, title, content);
+
+    return c.json({ memo }, 201);
+  } catch (error) {
+    return c.json({ error: "Internal Server Error" }, 500);
+  }
+});
+
+app.put("/api/memo", async (c) => {
+  const userId: string = c.get("jwtPayload").userId;
+  const { title, content, createdAt } = await c.req.json();
+
+  try {
+    const memo = await memoRepository.updateMemo(
+      userId,
+      createdAt,
+      title,
+      content
+    );
+
+    return c.json({ memo }, 200);
+  } catch (error) {
+    return c.json({ error: "Internal Server Error" }, 500);
+  }
+});
+
+app.delete("/api/memo", async (c) => {
+  const userId: string = c.get("jwtPayload").userId;
+  const { createdAt } = await c.req.json();
+
+  try {
+    await memoRepository.deleteMemo(userId, createdAt);
+
+    return c.json(204);
   } catch (error) {
     return c.json({ error: "Internal Server Error" }, 500);
   }
