@@ -70,7 +70,7 @@ export class UserRepository {
     return user;
   };
 
-  userInfo = async (id: string) => {
+  userInfoById = async (id: string) => {
     const user = await prisma.user.findUnique({
       where: { id },
       select: {
@@ -78,6 +78,14 @@ export class UserRepository {
         name: true,
         email: true,
       },
+    });
+    return user;
+  };
+
+  userInfoByEmail = async (email: string) => {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
     });
     return user;
   };

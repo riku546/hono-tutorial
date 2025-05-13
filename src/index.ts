@@ -1,13 +1,58 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
-import { MemoRepository } from "./repository.js";
+import { MemoRepository, UserRepository } from "./repository.js";
+import { sign } from "hono/jwt";
+import dotenv from "dotenv";
 
 const app = new Hono();
 
 const memoRepository = new MemoRepository();
+const userRepository = new UserRepository();
+
+dotenv.config();
 
 app.get("/", (c) => {
   return c.text("Hello World");
+});
+
+// 現在時刻 + 7日間
+const jwtExp = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
+
+app.post("/register", async (c) => {
+  const { name, email, password } = await c.req.json();
+  const user = await userRepository.createUser(name, email, password);
+  const payload = {
+    userId: user.id,
+    exp: jwtExp, 
+  };
+
+  const secret: string = process.env.JWT_SECRET || "";
+  const token = await sign(payload, secret);
+  return c.json({ token }, 201);
+});
+
+app.post("/login", async (c) => {
+  const { email, password } = await c.req.json();
+  const isValid = await userRepository.checkValid(email, password);
+
+  if (!isValid) {
+    return c.json({ error: "Invalid email or password" }, 422);
+  }
+
+  //型アサーションを使用しているのは、checkValid関数でユーザーの存在は確認しているため。
+  //そのため、userInfoByEmail関数の戻り値は必ず{ id: string }となる。
+  const user = (await userRepository.userInfoByEmail(email)) as {
+    id: string;
+  };
+
+  const payload = {
+    userId: user.id,
+    exp: jwtExp, 
+  };
+
+  const secret: string = process.env.JWT_SECRET || "";
+  const token = await sign(payload, secret);
+  return c.json({ token }, 201);
 });
 
 app.get("/api/memo", async (c) => {
