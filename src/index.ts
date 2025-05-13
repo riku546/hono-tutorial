@@ -3,13 +3,24 @@ import { Hono } from "hono";
 import { MemoRepository, UserRepository } from "./repository.js";
 import { sign } from "hono/jwt";
 import dotenv from "dotenv";
+import { jwt } from "hono/jwt";
+import type { JwtVariables } from "hono/jwt";
 
-const app = new Hono();
+const app = new Hono<{ Variables: JwtVariables }>();
+
+dotenv.config();
 
 const memoRepository = new MemoRepository();
 const userRepository = new UserRepository();
 
-dotenv.config();
+const jwtSecret = process.env.JWT_SECRET || "";
+
+app.use(
+  "/api/*",
+  jwt({
+    secret: jwtSecret,
+  })
+);
 
 app.get("/", (c) => {
   return c.text("Hello World");
@@ -23,11 +34,10 @@ app.post("/register", async (c) => {
   const user = await userRepository.createUser(name, email, password);
   const payload = {
     userId: user.id,
-    exp: jwtExp, 
+    exp: jwtExp,
   };
 
-  const secret: string = process.env.JWT_SECRET || "";
-  const token = await sign(payload, secret);
+  const token = await sign(payload, jwtSecret);
   return c.json({ token }, 201);
 });
 
@@ -47,11 +57,10 @@ app.post("/login", async (c) => {
 
   const payload = {
     userId: user.id,
-    exp: jwtExp, 
+    exp: jwtExp,
   };
 
-  const secret: string = process.env.JWT_SECRET || "";
-  const token = await sign(payload, secret);
+  const token = await sign(payload, jwtSecret);
   return c.json({ token }, 201);
 });
 
