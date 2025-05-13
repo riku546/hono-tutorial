@@ -6,6 +6,10 @@ const app = new Hono();
 
 const memoRepository = new MemoRepository();
 
+app.get("/", (c) => {
+  return c.text("Hello World");
+});
+
 app.get("/api/memo", async (c) => {
   const userId: string = "";
   try {
