@@ -5,6 +5,7 @@ import { sign } from "hono/jwt";
 import dotenv from "dotenv";
 import { jwt } from "hono/jwt";
 import type { JwtVariables } from "hono/jwt";
+import { cors } from "hono/cors";
 
 const app = new Hono<{ Variables: JwtVariables }>();
 
@@ -13,7 +14,7 @@ dotenv.config();
 const memoRepository = new MemoRepository();
 const userRepository = new UserRepository();
 
-const jwtSecret = process.env.JWT_SECRET || "";
+const jwtSecret = process.env.JWT_SECRET || "secret";
 
 app.use(
   "/api/*",
@@ -22,16 +23,24 @@ app.use(
   })
 );
 
-app.get("/", (c) => {
-  return c.text("Hello World");
-});
+app.use(
+  "/*",
+  cors({
+    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+    allowHeaders: ["*"],
+    allowMethods: ["POST", "GET", "DELETE", "PUT"],
+    exposeHeaders: ["Content-Length", "X-Kuma-Revision"],
+  })
+);
 
 // 現在時刻 + 7日間
 const jwtExp = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
 
 app.post("/register", async (c) => {
-  const { name, email, password } = await c.req.json();
-  const user = await userRepository.createUser(name, email, password);
+  const { username, email, password } = await c.req.json();
+
+  const user = await userRepository.createUser(username, email, password);
+
   const payload = {
     userId: user.id,
     exp: jwtExp,
@@ -43,13 +52,13 @@ app.post("/register", async (c) => {
 
 app.post("/login", async (c) => {
   const { email, password } = await c.req.json();
-  const isValid = await userRepository.checkValid(email, password);
+  const isExists = await userRepository.checkAlreadyExists(email, password);
 
-  if (!isValid) {
-    return c.json({ error: "Invalid email or password" }, 422);
+  if (isExists === undefined) {
+    return c.json({ error: "email or password is incorrect" }, 404);
   }
 
-  //型アサーションを使用しているのは、checkValid関数でユーザーの存在は確認しているため。
+  //型アサーションを使用しているのは、checkAlreadyExists関数でユーザーの存在は確認しているため。
   //そのため、userInfoByEmail関数の戻り値は必ず{ id: string }となる。
   const user = (await userRepository.userInfoByEmail(email)) as {
     id: string;

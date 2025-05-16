@@ -1,4 +1,3 @@
-import { callbackify } from "util";
 import { PrismaClient } from "./generated/prisma/index.js";
 
 const prisma = new PrismaClient();
@@ -90,7 +89,7 @@ export class UserRepository {
     return user;
   };
 
-  checkValid = async (
+  checkAlreadyExists = async (
     email: string,
     password: string
   ): Promise<boolean | undefined> => {
