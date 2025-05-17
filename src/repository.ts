@@ -3,7 +3,7 @@ import { PrismaClient } from "./generated/prisma/index.js";
 const prisma = new PrismaClient();
 
 export class MemoRepository {
-  fetchMemos = async (userId: string) => {
+  static fetchMemos = async (userId: string) => {
     return prisma.memo.findMany({
       where: { userId },
       select: {
@@ -15,7 +15,11 @@ export class MemoRepository {
     });
   };
 
-  createMemo = async (userId: string, title: string, content: string) => {
+  static createMemo = async (
+    userId: string,
+    title: string,
+    content: string
+  ) => {
     return prisma.memo.create({
       data: {
         userId,
@@ -25,7 +29,7 @@ export class MemoRepository {
     });
   };
 
-  updateMemo = async (
+  static updateMemo = async (
     userId: string,
     createdAt: Date,
     title: string,
@@ -45,7 +49,7 @@ export class MemoRepository {
     });
   };
 
-  deleteMemo = async (userId: string, createdAt: Date) => {
+  static deleteMemo = async (userId: string, createdAt: Date) => {
     return prisma.memo.delete({
       where: {
         userId_createdAt: {
@@ -58,7 +62,7 @@ export class MemoRepository {
 }
 
 export class UserRepository {
-  createUser = async (name: string, email: string, password: string) => {
+  static createUser = async (name: string, email: string, password: string) => {
     const user = await prisma.user.create({
       data: {
         name,
@@ -69,7 +73,7 @@ export class UserRepository {
     return user;
   };
 
-  userInfoById = async (id: string) => {
+  static userInfoById = async (id: string) => {
     const user = await prisma.user.findUnique({
       where: { id },
       select: {
@@ -81,7 +85,7 @@ export class UserRepository {
     return user;
   };
 
-  userInfoByEmail = async (email: string) => {
+  static userInfoByEmail = async (email: string) => {
     const user = await prisma.user.findUnique({
       where: { email },
       select: { id: true },
@@ -89,7 +93,7 @@ export class UserRepository {
     return user;
   };
 
-  checkAlreadyExists = async (
+  static checkAlreadyExists = async (
     email: string,
     password: string
   ): Promise<boolean | undefined> => {
