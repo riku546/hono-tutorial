@@ -4,17 +4,19 @@ import { sign } from "hono/jwt";
 import { jwtExp, jwtSecret } from "./jwtEnv.js";
 
 export class AuthController {
+  static payload = (userId: string) => {
+    return {
+      userId: userId,
+      exp: jwtExp,
+    };
+  };
+
   static async register(c: Context) {
     const { username, email, password } = await c.req.json();
 
     const user = await UserRepository.createUser(username, email, password);
 
-    const payload = {
-      userId: user.id,
-      exp: jwtExp,
-    };
-
-    const token = await sign(payload, jwtSecret);
+    const token = await sign(this.payload(user.id), jwtSecret);
     return c.json({ token }, 201);
   }
 
@@ -32,12 +34,7 @@ export class AuthController {
       id: string;
     };
 
-    const payload = {
-      userId: user.id,
-      exp: jwtExp,
-    };
-
-    const token = await sign(payload, jwtSecret);
+    const token = await sign(this.payload(user.id), jwtSecret);
     return c.json({ token }, 201);
   }
 }
