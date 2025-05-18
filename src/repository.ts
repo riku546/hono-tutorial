@@ -1,6 +1,4 @@
-import { PrismaClient } from "./generated/prisma/index.js";
-
-const prisma = new PrismaClient();
+import prisma from "../lib/prisma.js";
 
 export class MemoRepository {
   static fetchMemos = async (userId: string) => {
