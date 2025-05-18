@@ -1,10 +1,10 @@
 import { describe, expect, test, vi } from "vitest";
 import prisma from "../lib/__mocks__/prisma.js";
-import { MemoRepository } from "../src/repository.js";
+import { MemoRepository, UserRepository } from "../src/repository.js";
 
 vi.mock("../lib/prisma.js");
 
-describe("memo repository", async () => {
+describe("memo repository", () => {
   test("fetchMemos func", async () => {
     //memosのcreatedAtは降順に並んでいる
     const memos = [
@@ -87,4 +87,58 @@ describe("memo repository", async () => {
   });
 });
 
+describe("user repository", () => {
+  test("createUser func", async () => {
+    const newUser = {
+      id: "test userId",
+      name: "test userName",
+      email: "test@test.com",
+      password: "test password",
+    };
 
+    prisma.user.create.mockResolvedValue(newUser);
+    const result = await UserRepository.createUser(
+      newUser.name,
+      newUser.email,
+      newUser.password
+    );
+    expect(result).toBe(newUser);
+  });
+
+  test("userInfoById func exist user", async () => {
+    const userInfo = {
+      id: "test userId",
+      name: "test userName",
+      email: "test@test.com",
+    };
+
+    prisma.user.findUnique.mockResolvedValue(userInfo as any);
+    const result = await UserRepository.userInfoById(userInfo.id);
+    expect(result).toBe(userInfo);
+  });
+
+  test("userInfoById func undefined user", async () => {
+    const userId = "test userId";
+
+    prisma.user.findUnique.mockResolvedValue(null);
+    const result = await UserRepository.userInfoById(userId);
+    expect(result).toBe(null);
+  });
+
+  test("userInfoByEmail func exist user", async () => {
+    const email = "test@test.com";
+    const userInfo = { id: "test userId", password: "test password" };
+
+    prisma.user.findUnique.mockResolvedValue(userInfo as any);
+    const result = await UserRepository.userInfoByEmail(email);
+    expect(result).toBe(userInfo);
+  });
+
+  test("userInfoByEmail func  undefined user", async () => {
+    const email = "test@test.com";
+
+    prisma.user.findUnique.mockResolvedValue(null);
+    const result = await UserRepository.userInfoByEmail(email);
+    expect(result).toBe(null);
+  });
+});
