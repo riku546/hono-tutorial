@@ -26,3 +26,6 @@ lerna-debug.log*
 
 # misc
 .DS_Store
+
+# coverage（テストカバレッジ出力先）を無視
+coverage/
