@@ -16,7 +16,6 @@ export class AuthService {
     email: string,
     password: string
   ): Promise<string> {
-    // パスワードをハッシュ化
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await UserRepository.createUser(
@@ -24,8 +23,9 @@ export class AuthService {
       email,
       hashedPassword
     );
+    const payload = AuthService.payload(user.id);
 
-    const token = await sign(this.payload(user.id), jwtSecret);
+    const token = await sign(payload, jwtSecret);
 
     return token;
   }
