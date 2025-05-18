@@ -1,41 +1,32 @@
 import type { Context } from "hono";
-import { MemoRepository, UserRepository } from "./repository.js";
-import { sign } from "hono/jwt";
-import { jwtExp, jwtSecret } from "./jwtEnv.js";
+import { AuthService, MemoService } from "./service.js";
 
 export class AuthController {
-  static payload = (userId: string) => {
-    return {
-      userId: userId,
-      exp: jwtExp,
-    };
-  };
-
   static async register(c: Context) {
     const { username, email, password } = await c.req.json();
 
-    const user = await UserRepository.createUser(username, email, password);
-
-    const token = await sign(this.payload(user.id), jwtSecret);
-    return c.json({ token }, 201);
+    try {
+      const token = await AuthService.register(username, email, password);
+      return c.json({ token }, 201);
+    } catch (error) {
+      return c.json({ error: "Internal Server Error" }, 500);
+    }
   }
 
   static async login(c: Context) {
     const { email, password } = await c.req.json();
-    const isExists = await UserRepository.checkAlreadyExists(email, password);
 
-    if (isExists === undefined) {
-      return c.json({ error: "email or password is incorrect" }, 404);
+    try {
+      const token = await AuthService.login(email, password);
+
+      if (token === undefined) {
+        return c.json({ error: "email or password is incorrect" }, 404);
+      }
+
+      return c.json({ token }, 201);
+    } catch (error) {
+      return c.json({ error: "Internal Server Error" }, 500);
     }
-
-    //型アサーションを使用しているのは、checkAlreadyExists関数でユーザーの存在は確認しているため。
-    //そのため、userInfoByEmail関数の戻り値は必ず{ id: string }となる。
-    const user = (await UserRepository.userInfoByEmail(email)) as {
-      id: string;
-    };
-
-    const token = await sign(this.payload(user.id), jwtSecret);
-    return c.json({ token }, 201);
   }
 }
 
@@ -44,7 +35,7 @@ export class MemoController {
     const userId: string = c.get("jwtPayload").userId;
 
     try {
-      const memos = await MemoRepository.fetchMemos(userId);
+      const memos = await MemoService.fetchMemos(userId);
 
       return c.json({ memos }, 200);
     } catch (error) {
@@ -57,7 +48,7 @@ export class MemoController {
     const { title, content } = await c.req.json();
 
     try {
-      const memo = await MemoRepository.createMemo(userId, title, content);
+      const memo = await MemoService.createMemo(userId, title, content);
 
       return c.json({ memo }, 201);
     } catch (error) {
@@ -70,11 +61,11 @@ export class MemoController {
     const { title, content, createdAt } = await c.req.json();
 
     try {
-      const memo = await MemoRepository.updateMemo(
+      const memo = await MemoService.updateMemo(
         userId,
-        createdAt,
         title,
-        content
+        content,
+        createdAt
       );
 
       return c.json({ memo }, 200);
@@ -88,7 +79,7 @@ export class MemoController {
     const { createdAt } = await c.req.json();
 
     try {
-      await MemoRepository.deleteMemo(userId, createdAt);
+      await MemoService.deleteMemo(userId, createdAt);
 
       return c.json(204);
     } catch (error) {

@@ -31,9 +31,9 @@ export class MemoRepository {
 
   static updateMemo = async (
     userId: string,
-    createdAt: Date,
     title: string,
-    content: string
+    content: string,
+    createdAt: Date
   ) => {
     return prisma.memo.update({
       where: {
