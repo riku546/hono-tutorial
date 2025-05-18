@@ -1,6 +1,7 @@
 import { jwtExp, jwtSecret } from "./jwtEnv.js";
 import { MemoRepository, UserRepository } from "./repository.js";
 import { sign } from "hono/jwt";
+import bcrypt from "bcrypt";
 
 export class AuthService {
   static payload = (userId: string) => {
@@ -15,28 +16,32 @@ export class AuthService {
     email: string,
     password: string
   ): Promise<string> {
-    const user = await UserRepository.createUser(username, email, password);
+    // パスワードをハッシュ化
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await UserRepository.createUser(
+      username,
+      email,
+      hashedPassword
+    );
 
     const token = await sign(this.payload(user.id), jwtSecret);
 
     return token;
   }
 
-  static async login(
-    email: string,
-    password: string
-  ): Promise<string | undefined> {
-    const isExists = await UserRepository.checkAlreadyExists(email, password);
+  static async login(email: string, password: string): Promise<string | false> {
+    const user = await UserRepository.userInfoByEmail(email);
 
-    if (isExists === undefined) {
-      return undefined;
+    if (!user) {
+      return false;
     }
 
-    //型アサーションを使用しているのは、checkAlreadyExists関数でユーザーの存在は確認しているため。
-    //そのため、userInfoByEmail関数の戻り値は必ず{ id: string }となる。
-    const user = (await UserRepository.userInfoByEmail(email)) as {
-      id: string;
-    };
+    const isMatchPassword = await bcrypt.compare(password, user.password);
+
+    if (!isMatchPassword) {
+      return false;
+    }
 
     const payload = AuthService.payload(user.id);
 

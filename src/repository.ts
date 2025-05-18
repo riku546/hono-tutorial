@@ -67,7 +67,7 @@ export class UserRepository {
       data: {
         name,
         email,
-        password: password,
+        password,
       },
     });
     return user;
@@ -88,23 +88,8 @@ export class UserRepository {
   static userInfoByEmail = async (email: string) => {
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true },
-    });
-    return user;
-  };
-
-  static checkAlreadyExists = async (
-    email: string,
-    password: string
-  ): Promise<boolean | undefined> => {
-    const user = await prisma.user.findUnique({
-      where: { email },
       select: { id: true, password: true },
     });
-    if (!user) {
-      return undefined;
-    }
-
-    return password === user.password;
+    return user;
   };
 }

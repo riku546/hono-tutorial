@@ -19,8 +19,8 @@ export class AuthController {
     try {
       const token = await AuthService.login(email, password);
 
-      if (token === undefined) {
-        return c.json({ error: "email or password is incorrect" }, 404);
+      if (token === false) {
+        return c.json({ error: "email or password is incorrect" }, 422);
       }
 
       return c.json({ token }, 201);
