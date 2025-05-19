@@ -29,3 +29,5 @@ lerna-debug.log*
 
 # coverage（テストカバレッジ出力先）を無視
 coverage/
+
+/src/generated/
